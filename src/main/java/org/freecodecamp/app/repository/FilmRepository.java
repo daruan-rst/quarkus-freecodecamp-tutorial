@@ -1,6 +1,7 @@
 package org.freecodecamp.app.repository;
 
 import com.speedment.jpastreamer.application.JPAStreamer;
+import com.speedment.jpastreamer.streamconfiguration.StreamConfiguration;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.freecodecamp.app.model.Film;
@@ -30,5 +31,13 @@ public class FilmRepository {
                 .sorted(Film$.length)
                 .skip(page * PAGE_SIZE)
                 .limit(PAGE_SIZE);
+    }
+
+    public Stream<Film> actors(String startsWith){
+        final StreamConfiguration<Film> sc =
+                StreamConfiguration.of(Film.class).joining(Film$.actors);
+        return jpaStreamer.stream(sc)
+                .filter(Film$.title.startsWith(startsWith))
+                .sorted(Film$.length.reversed());
     }
 }
