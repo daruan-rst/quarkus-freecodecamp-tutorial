@@ -4,6 +4,7 @@ import com.speedment.jpastreamer.application.JPAStreamer;
 import com.speedment.jpastreamer.streamconfiguration.StreamConfiguration;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
 import org.freecodecamp.app.model.Film;
 import org.freecodecamp.app.model.Film$;
 
@@ -25,6 +26,12 @@ public class FilmRepository {
                 .findFirst();
     }
 
+    public Stream<Film> getFilms(short minLength){
+        return jpaStreamer.stream(Film.class)
+                .filter(Film$.length.greaterThan(minLength))
+                .sorted(Film$.length);
+    }
+
     public Stream<Film> paged(long page, short minLength){
         return jpaStreamer.stream(Film.class)
                 .filter(Film$.length.greaterThan(minLength))
@@ -33,11 +40,21 @@ public class FilmRepository {
                 .limit(PAGE_SIZE);
     }
 
-    public Stream<Film> actors(String startsWith){
+    public Stream<Film> actors(String startsWith, short minLength){
         final StreamConfiguration<Film> sc =
                 StreamConfiguration.of(Film.class).joining(Film$.actors);
         return jpaStreamer.stream(sc)
-                .filter(Film$.title.startsWith(startsWith))
+                .filter(Film$.title.startsWith(startsWith).and(Film$.length.greaterThan(minLength)))
                 .sorted(Film$.length.reversed());
+    }
+
+    @Transactional
+    public void updateRentalRate(short minLength, float rentalRate){
+        jpaStreamer.stream(Film.class)
+                .filter(Film$.length.greaterThan(minLength))
+                .forEach(f -> {
+                    f.setRentalRate(rentalRate);
+                });
+
     }
 }

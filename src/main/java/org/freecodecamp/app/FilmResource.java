@@ -2,6 +2,7 @@ package org.freecodecamp.app;
 
 import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
@@ -25,7 +26,7 @@ public class FilmResource {
     }
 
     @GET
-    @Path("/film/{filmId}")
+    @Path("film/{filmId}")
     @Produces(MediaType.TEXT_PLAIN)
     public String getFilm(short filmId) {
         Optional<Film> film = filmRepository.getFilm(filmId);
@@ -42,16 +43,31 @@ public class FilmResource {
     }
 
     @GET
-    @Path("actors/{startsWith}")
+    @Path("actors/{startsWith}/{minLength}")
     @Produces(MediaType.TEXT_PLAIN)
-    public String actors(String startsWith){
-        return filmRepository.actors(startsWith)
+    public String actors(String startsWith,
+                        short minLength){
+        return filmRepository.actors(startsWith, minLength)
                 .map( f-> String.format("%s (%d min): %s",
                         f.getTitle(),
                         f.getLength(),
                         f.getActors().stream()
                         .map( a -> String.format("%s %s",a.getFirstName(), a.getLastName()))
                                 .collect(Collectors.joining(", "))))
+                .collect(Collectors.joining("\n"));
+    }
+
+    @PUT
+    @Path("actors/{minLength}/{rentalRate}")
+    @Produces(MediaType.TEXT_PLAIN)
+    public String update(short minLength,
+                         float rentalRate){
+        filmRepository.updateRentalRate(minLength, rentalRate);
+        return filmRepository.getFilms(minLength)
+                .map(f -> String.format("%s (%d min) - $%f",
+                        f.getTitle(),
+                        f.getLength(),
+                        f.getRentalRate()))
                 .collect(Collectors.joining("\n"));
     }
 }
